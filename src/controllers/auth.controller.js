@@ -1,30 +1,33 @@
+const bcrypt = require("bcryptjs");
+
 const loginController = async (req, res) => {
 
-    const {username,email,password} = req.body; 
+    const { username, email, password } = req.body;
     const user = await userModel.findOne({
-        $or:[
-            {email},
-            {username}
+        $or: [
+            { email },
+            { username }
         ]
     });
 
     console.log(user);
 
-    if(!user){
+    if (!user) {
         return res.status(404).json({
-            message:"User not found"
+            message: "User not found"
         })
     }
 
-    const hash = crypto.createHash("sha256").update(password).digest("hex");
+    // const hash = crypto.createHash("sha256").update(password).digest("hex");
+    //   const isPasswordCorrect = user.password === hash;
 
-    const isPasswordCorrect = user.password === hash;
-    console.log(user.password)
-    console.log(hash)
+    //now will use bcryptjs lib to generate hash
 
-    if(!isPasswordCorrect){
+    const isPasswordValid = bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
         return res.status(401).json({
-            message:"Invalid Credentials"
+            message: "Invalid Credentials"
         })
     }
 
@@ -64,7 +67,10 @@ const registerController = async (req, res) => {
         })
     }
 
-    const hash = crypto.createHash("sha256").update(password).digest("hex");
+    //const hash = crypto.createHash("sha256").update(password).digest("hex");
+
+    //now will use bcryptjs lib to generate hash
+    const hash = await bcrypt.hash(password, 10);
 
     const user = await userModel.create({
         name,
