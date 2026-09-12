@@ -6,109 +6,58 @@ const createPostController = async (req, res) => {
 
     const file = req.file;
     const { caption } = req.body;
-    const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({
-            message: "Token not found! Unauthorized access"
-        })
-    }
+    const uploadedFile = await imagekit.upload({
+        file: file.buffer,
+        fileName: file.originalname,
+        folder: 'uploads'
+    });
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const uploadedFile = await imagekit.upload({
-            file: file.buffer,
-            fileName: file.originalname,
-            folder: 'uploads'
-        });
+    const post = await postModel.create({
+        caption,
+        imgUrl: uploadedFile.url,
+        user: req.user.id
+    });
 
-        const post = await postModel.create({
-            caption,
-            imgUrl: uploadedFile.url,
-            user: decoded.id
-        });
-
-        return res.status(201).json({
-            message: "post created successfully",
-            post
-        });
-
-    } catch (error) {
-        return res.status(401).json({
-            message: "Token not matched! Unauthorized access"
-        })
-    }
+    return res.status(201).json({
+        message: "post created successfully",
+        post
+    });
 
 }
 
 const getPostsController = async (req, res) => {
 
-    const token = req.cookies.token;
-    console.log(token);
-    if (!token) {
-        return res.status(401).json({
-            message: "Token not found! Unauthorized Access"
-        });
-    }
+    const posts = await postModel.find({ user: req.user.id });
 
-    try {
-        console.log("token", token);
-        const decode = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("decode", decode);
-
-        const posts = await postModel.find({ user: decode.id });
-        console.log("post", posts);
-
-        return res.status(200).json({
-            message: "Posts fetched successfully.",
-            posts
-        })
-    } catch (error) {
-        return res.status(401).json({
-            message: "Token Mismatch! Unauthorized Access"
-        })
-    }
+    return res.status(200).json({
+        message: "Posts fetched successfully.",
+        posts
+    })
 }
 
 const getPostDetailController = async (req, res) => {
 
-    const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({
-            message: "Token not found! Unauthorized Access"
+    const postId = req.params.postId;
+
+    const post = await postModel.findById(postId);
+    if (!post) {
+        return res.status(404).json({
+            message: "Post not found"
         })
     }
 
-    try {
-        const decode = jwt.verify(token, process.env.JWT_SECRET);
+    const isAuthorized = post.user.toString() === req.user.id;
 
-        const userId = decode.id;
-        const postId = req.params.postId;
-        
-        const post = await postModel.findById(postId);
-        if (!post) {
-            return res.status(404).json({
-                message: "Post not found"
-            })
-        }
-
-        const isAuthorized = post.user.toString() === userId;
-
-        if (!isAuthorized) {
-            return res.status(403).json({
-                message: "You're not authorized to access this post content."
-            })
-        }
-
-        return res.status(200).json({
-            message: "Post details fetched successfully.",
-            post
-        })
-
-    } catch (error) {
-        return res.status(401).json({
-            message: "Token mismatched! Unauthorized Access"
+    if (!isAuthorized) {
+        return res.status(403).json({
+            message: "You're not authorized to access this post content."
         })
     }
+
+    return res.status(200).json({
+        message: "Post details fetched successfully.",
+        post
+    })
 }
 
 
