@@ -27,7 +27,7 @@ const createPostController = async (req, res) => {
             user: decoded.id
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "post created successfully",
             post
         });
@@ -51,14 +51,14 @@ const getPostsController = async (req, res) => {
     }
 
     try {
-        console.log("token",token);
+        console.log("token", token);
         const decode = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("decode",decode);
-            
-            const posts = await postModel.find({ user: decode.id });
-            console.log("post",posts);
+        console.log("decode", decode);
 
-        res.status(200).json({
+        const posts = await postModel.find({ user: decode.id });
+        console.log("post", posts);
+
+        return res.status(200).json({
             message: "Posts fetched successfully.",
             posts
         })
@@ -69,9 +69,52 @@ const getPostsController = async (req, res) => {
     }
 }
 
+const getPostDetailController = async (req, res) => {
+
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({
+            message: "Token not found! Unauthorized Access"
+        })
+    }
+
+    try {
+        const decode = jwt.verify(token, process.env.JWT_SECRET);
+
+        const userId = decode.id;
+        const postId = req.params.postId;
+        
+        const post = await postModel.findById(postId);
+        if (!post) {
+            return res.status(404).json({
+                message: "Post not found"
+            })
+        }
+
+        const isAuthorized = post.user.toString() === userId;
+
+        if (!isAuthorized) {
+            return res.status(403).json({
+                message: "You're not authorized to access this post content."
+            })
+        }
+
+        return res.status(200).json({
+            message: "Post details fetched successfully.",
+            post
+        })
+
+    } catch (error) {
+        return res.status(401).json({
+            message: "Token mismatched! Unauthorized Access"
+        })
+    }
+}
+
 
 
 module.exports = {
     createPostController,
-    getPostsController
+    getPostsController,
+    getPostDetailController
 }
