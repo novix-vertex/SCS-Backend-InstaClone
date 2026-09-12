@@ -13,26 +13,30 @@ const createPostController = async (req, res) => {
         })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const uploadedFile = await imagekit.upload({
+            file: file.buffer,
+            fileName: file.originalname,
+            folder: 'uploads'
+        });
 
+        const post = await postModel.create({
+            caption,
+            imgUrl: uploadedFile.url,
+            user: decoded.id
+        });
 
-    const uploadedFile = await imagekit.upload({
-        file: file.buffer,
-        fileName: file.originalname,
-        folder: 'uploads'
-    });
-    console.log(uploadedFile);
+        res.status(201).json({
+            message: "post created successfully",
+            post
+        });
 
-    const post = await postModel.create({
-        caption,
-        imgUrl: uploadedFile.url,
-        user: decoded.id
-    });
-
-    res.status(201).json({
-        message: "post created successfully",
-        post
-    });
+    } catch (error) {
+        return res.status(401).json({
+            message: "Token not matched! Unauthorized access"
+        })
+    }
 
 }
 
