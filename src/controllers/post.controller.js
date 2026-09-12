@@ -40,6 +40,38 @@ const createPostController = async (req, res) => {
 
 }
 
+const getPostsController = async (req, res) => {
+
+    const token = req.cookies.token;
+    console.log(token);
+    if (!token) {
+        return res.status(401).json({
+            message: "Token not found! Unauthorized Access"
+        });
+    }
+
+    try {
+        console.log("token",token);
+        const decode = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("decode",decode);
+            
+            const posts = await postModel.find({ user: decode.id });
+            console.log("post",posts);
+
+        res.status(200).json({
+            message: "Posts fetched successfully.",
+            posts
+        })
+    } catch (error) {
+        return res.status(401).json({
+            message: "Token Mismatch! Unauthorized Access"
+        })
+    }
+}
+
+
+
 module.exports = {
-    createPostController
+    createPostController,
+    getPostsController
 }
