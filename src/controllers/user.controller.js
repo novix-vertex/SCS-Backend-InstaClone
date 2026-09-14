@@ -13,7 +13,7 @@ const followUserController = async (req, res) => {
     }
 
     const isFolloweeExists = await userModel.findOne({username:followeeUserName});
-    if(isFolloweeExists){
+    if(!isFolloweeExists){
         res.status(400).json({
             message:"There is no such user who you want to follow"
         })
