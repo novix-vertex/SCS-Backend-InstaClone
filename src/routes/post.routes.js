@@ -1,5 +1,5 @@
 const express = require("express");
-const { createPostController, getPostsController, getPostDetailController } = require("../controllers/post.controller");
+const { createPostController, getPostsController, getPostDetailController, likePostController } = require("../controllers/post.controller");
 const upload = require("../config/multer.config");
 const identifyUser = require("../middlewares/auth.middleware");
 
@@ -8,5 +8,6 @@ const postRouter = express.Router();
 postRouter.post("/", upload.single("image"), identifyUser, createPostController);
 postRouter.get("/", identifyUser, getPostsController);
 postRouter.get("/details/:postId", identifyUser, getPostDetailController);
+postRouter.post("/like/:postId", identifyUser, likePostController)
 
 module.exports = postRouter;
