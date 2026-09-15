@@ -23,7 +23,7 @@ const Register = () => {
     handleRegister(name, username, email, password)
       .then(res => {
         console.log(res);
-        navigate("/login");
+        navigate("/");
       });
   }
   return (
